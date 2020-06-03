@@ -1,0 +1,17 @@
+name: RDS Deploy
+description: Deploy an AWS RDS Cluster using Terraform
+inputs:
+  demo:
+    description: 'Demo Variable'
+    default: 'demo'
+    required: true
+
+outputs:
+  arn:
+    description: 'Elasticsearch service ARN'
+  endpoint:
+    description: 'Elasticsearch service endpoint'
+
+runs:
+  using: docker
+  image: Dockerfile
