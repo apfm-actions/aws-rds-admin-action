@@ -1,16 +1,34 @@
 name: RDS Deploy
 description: Deploy an AWS RDS Cluster using Terraform
 inputs:
-  demo:
-    description: 'Demo Variable'
-    default: 'demo'
+  cluster_identifier:
+    description: 'RDS Endpoint'
+    default: 'default-aurora-mysql'
+    required: true
+  rds_username:
+    description: 'Master RDS Username'
+    default: 'techops'
+    required: true
+  rds_password:
+    description: 'Master RDS Password'
+    default: 'shared-infra-rds-cluster-passwd'
+    required: true
+  schema:
+    description: 'Schema name to create'
+    default: ''
+    required: true
+  username:
+    description: 'Username for the schema'
+    default: ''
     required: true
 
 outputs:
-  arn:
-    description: 'Elasticsearch service ARN'
-  endpoint:
-    description: 'Elasticsearch service endpoint'
+  schema:
+    description: 'Database schema name'
+  username:
+    description: 'Database username for the current schema'
+  ssm_password:
+    description: 'SSM parameter with the database password'
 
 runs:
   using: docker
