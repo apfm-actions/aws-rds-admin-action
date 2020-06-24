@@ -1,0 +1,50 @@
+# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: APFM RDS Action Build
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.APFM_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.APFM_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: 'Create AWS ECR repository'
+        id: ecr
+        uses: apfm-actions/aws-ecr-create-action@master
+        with:
+          allowed_accounts: 146283654498 521312932954 534743673678 451834275279
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-docker-image
+        env:
+          ECR_REPO: ${{ steps.ecr.outputs.uri }}
+          ECR_LABEL: ${{ steps.ecr.outputs.label }}
+        run: |
+          docker build --tag "${ECR_REPO}:${ECR_LABEL}" .
+          docker push "${ECR_REPO}:${ECR_LABEL}"

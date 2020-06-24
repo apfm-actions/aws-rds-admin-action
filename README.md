@@ -1,4 +1,4 @@
-AWS Terraform LoaRDSdbalancer deployment action
+AWS Terraform RDS Admin action
 ============================
 This repository is home to a _RDS_ deployment GitHub action used as a template for
 rapid development of Terraform based actions. The goal of this model is to
@@ -13,22 +13,20 @@ into terraform variables.
 
 For example, if your define the following `action.yaml`:
 ```yaml
-  - name: My Project
-    id: project
-    uses: aplaceformom/terraform-project-base-action@master
+  - name: Configure AWS Credentials
+    uses: aws-actions/configure-aws-credentials@v1
     with:
-      workspace: dev
-      project: my-project
-      owner: myteam
-      email: myteam@example.org
-      remote_state_bucket: apfm-terraform-remotestate
-      remote_lock_table: terraform-statelock
-      shared_state_key: terraform/apfm.tfstate
-        debug: false
-  - name: RDS Deploy
-    uses: aplaceformom/terraform-rds-action@master
+      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      aws-region: us-east-2
+  - name: Create a new database
+    uses: apfm-actions/aws-ecs-exec-action@master
     with:
-      name: "rds-name"
+      task_name: my-ecs-task
+      aws_role_arn: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+      aws_external_id: ${{ secrets.AWS_ROLE_EXTERNAL_ID }}
+      wait: true
+      timeout: 600
 ```
 
 ### engine_version

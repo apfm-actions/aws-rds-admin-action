@@ -5,30 +5,10 @@ inputs:
     description: 'RDS Endpoint'
     default: 'default-aurora-mysql'
     required: true
-  rds_username:
-    description: 'Master RDS Username'
-    default: 'techops'
-    required: true
-  rds_password:
-    description: 'Master RDS Password'
-    default: 'shared-infra-rds-cluster-passwd'
-    required: true
-  schema:
-    description: 'Schema name to create'
+  dbname:
+    description: 'Database name to create'
     default: ''
     required: true
-  username:
-    description: 'Username for the schema'
-    default: ''
-    required: true
-
-outputs:
-  schema:
-    description: 'Database schema name'
-  username:
-    description: 'Database username for the current schema'
-  ssm_password:
-    description: 'SSM parameter with the database password'
 
 runs:
   using: docker
