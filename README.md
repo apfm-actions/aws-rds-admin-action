@@ -1,93 +1,83 @@
 AWS Terraform RDS Admin action
 ============================
-This repository is home to a _RDS_ deployment GitHub action used as a template for
-rapid development of Terraform based actions. The goal of this model is to
-provide a common framework for deploying modularized infrastructure with
-configuration paramters supplied as part of the GitHub workflow.
+This repository is home to a _RDS_ deployment GitHub action this action create a single database in our internal cluster.
+
+WARNING
+-------
+
+This action is ONE TIME execution, you should only run this one time.
 
 Usage
 -----
-Simply clone this repository and start developing your Terraform IAC. The
-entrypoint handler for this action will automatically translate GitHub inputs
-into terraform variables.
+You can use it in 2 ways, add the following section to a workflow into a github actions or your can execute them manually from you workstation.
+
+*Github Action:*
 
 For example, if your define the following `action.yaml`:
 ```yaml
-  - name: Configure AWS Credentials
-    uses: aws-actions/configure-aws-credentials@v1
-    with:
-      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      aws-region: us-east-2
-  - name: Create a new database
-    uses: apfm-actions/aws-ecs-exec-action@master
-    with:
-      task_name: my-ecs-task
-      aws_role_arn: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-      aws_external_id: ${{ secrets.AWS_ROLE_EXTERNAL_ID }}
-      wait: true
-      timeout: 600
+      - name: Shared Info
+        id: project
+        uses: 'docker://apfm/terraform-project-base-action:latest'
+        with:
+          project: demo-project
+          owner: techops
+          email: techops@aplaceformom.com
+          tf_assume_role: TerraformApply
+          remote_state_bucket: apfm-terraform-remotestate
+          remote_lock_table: terraform-statelock
+          shared_state_key: terraform/apfm.tfstate
+          debug: false
+    - name: "Create a new database"
+      uses: apfm-actions/aws-ecs-exec-action@master
+      with:
+          project: demo-project
+          name: create-demo-database
+          image: ${{ steps.project.outputs.account_root_id }}.dkr.ecr.${{ steps.project.outputs.network_region }}.amazonaws.com/aws-rds-admin-action:latest
+          cpu: 256
+          memory: 512
+          command: '["entrypoint.sh"]'
+          wait: true
+          timeout: 600
+          cluster: ${{ steps.project.outputs.cluster_id }}
+          environment: DB_NAME,ENGINE
+          debug: true
+      env:
+        DB_NAME: name_new_database
+        ENGINE: postgresql
 ```
 
-### engine_version
-ElasticSearch engine version
-- default: 7.4
+## Environment Variables required
 
-### ebs
-Enable ebs storage.
-- default: true
+### DB_NAME
+Name of the database
+- default: none
+- required: true
 
-### instance_type
-The ElasticSearch instance type to use. See: https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/aes-supported-instance-types.html
-- default: t2.medium.elasticsearch
+### ENGINE
+Name of the database
+- default: none
+- required: true
+- options: mysql, postgresql
 
-### instance_count
-The number of nodes to run in your instance. Note: enabling 3 instances will
-make the cluster multi-availability-zone aware.
-- default: 1
+*Manual execution:*
 
-### volume_type
-ElasticSearch Volume type (standard, gp2, io1)
-- default: gp2
+```
+#!/bin/sh
+export AWS_DEFAULT_REGION='YOUR_REGION'
+export AWS_ACCESS_KEY_ID='YOUR_ACCESS_KEY'
+export AWS_SECRET_ACCESS_KEY='YOURSECRETKEY'
+export EXTERNAL_ID='YOUR_EXTERNAL_ID'
+export ROOT_ACCOUNT_ID='YOUR_ROOT_ACCOUNT_ID'
 
-### volume_size
-Per instance volume size (in gigs).
-- default: 10
+AWS_ACCESS_JSON=$(aws sts assume-role --external-id ${EXTERNAL_ID} --role-arn "arn:aws:iam::${ACCOUNT_ID}:role/TerraformApply" --role-session-name "aws-rds-exec-action")
 
-### log_type
-A type of Elasticsearch log. Valid values: INDEX_SLOW_LOGS, SEARCH_SLOW_LOGS, ES_APPLICATION_LOGS
-- default: INDEX_SLOW_LOGS
+export AWS_ACCESS_KEY_ID="$(echo "${AWS_ACCESS_JSON}"|jq -r '.Credentials.AccessKeyId')"
+export AWS_SECRET_ACCESS_KEY="$(echo "${AWS_ACCESS_JSON}"|jq -r '.Credentials.SecretAccessKey')"
+export AWS_SESSION_TOKEN="$(echo "${AWS_ACCESS_JSON}"|jq -r '.Credentials.SessionToken')"
 
-### public
-Make ElasticSearch accessible publicly (dangerous). If you enable this option
-then the ElasticSearch cluster will be made available on a public IP.  You
-should configured the `allowed_ips` to restrict access to the instance.
-- default: false
+export DB_NAME='YOUR_DABATASE_NAME'
+export ENGINE='YOUR_ENGINE'
+export INPUT_AWS_ROLE_ARN=arn:aws:iam::${ACCOUNT_ID}:role/TerraformApply
 
-### allowed_ips
-A comman seperated list of network maps (in CIDR format) which should be
-granted access to this ElasticSearch instance (only valid if public = true).
-- example: x.x.x.x/32,y.y.y.y/24
-- default: N/A
-
-- More information about the valid options to be used, can be found [here](https://aplaceformom.atlassian.net/wiki/spaces/TECHOPS/pages/1049133728/2020+AWS+Tagging+Standards) 
-
-Test executed
--------------
-
-- Add more nodes to a cluster previously created: 
-  - Result: Nodes were added without interrupt service.
-- Remove nodes from the cluster previosly created:
-  - Result: Nodes were removed without interruption.
-- Upsize nodes:
-  - Result: Nodes were resized without interrupt service.
-- Downsize nodes:
-  - Result: Nodes were downsized without interruption.
-
-References
-----------
-
-- https://www.terraform.io/docs/providers/aws/r/elasticsearch_domain.html
-- https://docs.aws.amazon.com/cli/latest/reference/es/create-elasticsearch-domain.html
-- https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/aes-supported-instance-types.html
-- https://docs.aws.amazon.com/cli/latest/reference/es/create-elasticsearch-domain.html
+./entrypoint.sh
+```
