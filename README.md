@@ -53,11 +53,29 @@ Name of the database
 - default: none
 - required: true
 
+### DB_USER
+Name of the Database Master User
+- default: root
+- required: true
+
+### DB_NEW_USER
+Name of the new database user
+- default: ${DB_NAME}_user
+- required: true
+
 ### ENGINE
 Name of the database
 - default: none
 - required: true
 - options: mysql, postgresql
+
+## Environment Variables optional
+
+### SKIP_DB_CREATION
+If this is true, don't try to create database.
+- default: false
+- required: true
+- options: true, false
 
 *Manual execution:*
 

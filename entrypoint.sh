@@ -55,32 +55,37 @@ fi
 WAIT=
 ! "${INPUT_WAIT}" || WAIT='--wait'
 
+# Common Variables
+export DB_NAME=${DB_NAME:?'DB_NAME variable missing.'}
+export SKIP_DB_CREATION=${SKIP_DB_CREATION:-'false'}
+export DB_USER=${DB_USER:-'root'}
+export DB_RANDOM_PASSWORD=$(date +%s | sha256sum | base64 | head -c 16)
+export DB_NEW_USER=${DB_NEW_USER:-"${DB_NAME}_user"}
+
 if test "${ENGINE}" = 'mysql'; then
-    export DB_NAME=${DB_NAME:?'DB_NAME variable missing.'}
-    export DB_USER=${DB_USER:-'root'}
-    export DB_PASSWORD=$(aws ssm get-parameter --name '/default-aurora-mysql/password/master' --with-decryption | jq -r '.Parameter.Value')
+    export DB_CLUSTER=${DB_CLUSTER:-'default-aurora-mysql'}
+    export DB_PASSWORD=$(aws ssm get-parameter --name "/${DB_CLUSTER}/password/master" --with-decryption | jq -r '.Parameter.Value')
     export DB_HOST=${DB_HOST:-$(aws rds describe-db-clusters --db-cluster-identifier default-aurora-mysql | jq -r '.DBClusters[].Endpoint'))}
     export DB_PORT='3306'
-    export DB_RANDOM_PASSWORD=$(date +%s | sha256sum | base64 | head -c 16)
-    export DB_NEW_USER=${DB_NEW_USER:-"${DB_NAME}_user"}
-    mycli -h $DB_HOST -u $DB_USER -p$DB_PASS -P $DB_PORT -e "CREATE DATABASE $DB_NAME"
+    if test "${SKIP_DB_CREATION}" = 'false'
+        mycli -h $DB_HOST -u $DB_USER -p$DB_PASS -P $DB_PORT -e "CREATE DATABASE $DB_NAME"
+    fi
     mycli -h $DB_HOST -u $DB_USER -p$DB_PASS -P $DB_PORT -e "CREATE USER '$DB_NEW_USER'@'*' IDENTIFIED BY PASSWORD PASSWORD('$DB_RANDOM_PASSWORD')"
     mycli -h $DB_HOST -u $DB_USER -p$DB_PASS -P $DB_PORT -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO myuser"
     aws ssm put-parameter --type SecureString --name "/default-aurora-mysql/password/$DB_NAME" --value "$DB_RANDOM_PASSWORD"
     #aws ssm put-parameter --type SecureString --name "/default-aurora-mysql/connection/$DB_NAME" --value  "postgresql://${DB_NEW_USER}:${DB_RANDOM_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
 elif test "${ENGINE}" = 'postgresql'; then
-    export DB_NAME=${DB_NAME:?'DB_NAME variable missing.'}
-    export DB_USER=${DB_USER:-'root'}
-    export PGPASSWORD=$(aws ssm get-parameter --name '/default-aurora-postgresql/password/master' --with-decryption | jq -r '.Parameter.Value')
-    export DB_HOST=${DB_HOST:-$(aws rds describe-db-clusters --db-cluster-identifier default-aurora-postgresql | jq -r '.DBClusters[].Endpoint')}
+    export DB_CLUSTER=${DB_CLUSTER:-'default-aurora-postgresql'}
+    export PGPASSWORD=$(aws ssm get-parameter --name "/${DB_CLUSTER}/password/master" --with-decryption | jq -r '.Parameter.Value')
+    export DB_HOST=${DB_HOST:-$(aws rds describe-db-clusters --db-cluster-identifier ${DB_CLUSTER} | jq -r '.DBClusters[].Endpoint')}
     export DB_PORT='5432'
-    export DB_RANDOM_PASSWORD=$(date +%s | sha256sum | base64 | head -c 16)
-    export DB_NEW_USER=${DB_NEW_USER:-"${DB_NAME}_user"}
-    psql -U $DB_USER -h $DB_HOST postgres -c "CREATE DATABASE $DB_NAME"
+    if test "${SKIP_DB_CREATION}" = 'false'
+        psql -U $DB_USER -h $DB_HOST postgres -c "CREATE DATABASE $DB_NAME"
+    fi    
     psql -U $DB_USER -h $DB_HOST postgres -c "CREATE USER ${DB_NEW_USER} WITH ENCRYPTED PASSWORD '$DB_RANDOM_PASSWORD'"
     psql -U $DB_USER -h $DB_HOST postgres -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_NEW_USER"
-    aws ssm put-parameter --type SecureString --name "/default-aurora-postgresql/password/$DB_NAME" --value "$DB_RANDOM_PASSWORD"
-    aws ssm put-parameter --type SecureString --name "/default-aurora-postgresql/connection/$DB_NAME" --value  "postgresql://${DB_NEW_USER}:${DB_RANDOM_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+    aws ssm put-parameter --type SecureString --name "/${DB_CLUSTER}/password/$DB_NAME" --value "$DB_RANDOM_PASSWORD"
+    aws ssm put-parameter --type SecureString --name "/${DB_CLUSTER}/connection/$DB_NAME" --value  "postgresql://${DB_NEW_USER}:${DB_RANDOM_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
 else
     echo "ENGINE variable incorrect."
     return 1
