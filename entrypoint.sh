@@ -50,6 +50,8 @@ DEBUG=
 if test "${INPUT_DEBUG}" = 'true'; then
 	DEBUG='--debug'
         set -x
+
+	export
 fi
 
 WAIT=
@@ -68,7 +70,7 @@ if test "${ENGINE}" = 'mysql'; then
     export DB_HOST=${DB_HOST:-$(aws rds describe-db-clusters --db-cluster-identifier default-aurora-mysql | jq -r '.DBClusters[].Endpoint'))}
 	export DB_HOST_READER=${DB_HOST_READER:-$(aws rds describe-db-clusters --db-cluster-identifier default-aurora-mysql | jq -r '.DBClusters[].ReaderEndpoint'))}
     export DB_PORT='3306'
-    if test "${SKIP_DB_CREATION}" = 'false'
+    if test "${SKIP_DB_CREATION}" = 'false'; then
         mycli -h $DB_HOST -u $DB_USER -p$DB_PASS -P $DB_PORT -e "CREATE DATABASE $DB_NAME"
     fi
     mycli -h $DB_HOST -u $DB_USER -p$DB_PASS -P $DB_PORT -e "CREATE USER '$DB_NEW_USER'@'*' IDENTIFIED BY PASSWORD PASSWORD('$DB_RANDOM_PASSWORD')"
@@ -80,7 +82,7 @@ elif test "${ENGINE}" = 'postgresql'; then
     export PGPASSWORD=$(aws ssm get-parameter --name "/${DB_CLUSTER}/password/master" --with-decryption | jq -r '.Parameter.Value')
     export DB_HOST=${DB_HOST:-$(aws rds describe-db-clusters --db-cluster-identifier ${DB_CLUSTER} | jq -r '.DBClusters[].Endpoint')}
     export DB_PORT='5432'
-    if test "${SKIP_DB_CREATION}" = 'false'
+    if test "${SKIP_DB_CREATION}" = 'false'; then
         psql -U $DB_USER -h $DB_HOST postgres -c "CREATE DATABASE $DB_NAME"
     fi    
     psql -U $DB_USER -h $DB_HOST postgres -c "CREATE USER ${DB_NEW_USER} WITH ENCRYPTED PASSWORD '$DB_RANDOM_PASSWORD'"

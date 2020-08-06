@@ -99,3 +99,7 @@ export INPUT_AWS_ROLE_ARN=arn:aws:iam::${ACCOUNT_ID}:role/TerraformApply
 
 ./entrypoint.sh
 ```
+*Manual execute simulation from your computer*
+
+# SIMLUATIONDB DEV
+docker run --rm -it -e "ENGINE=postgresql" -e "AWS_ACCESS_KEY_ID=YOURAWSACCESSKEY" -e "AWS_SECRET_ACCESS_KEY=YOURSECRETAWSACCESSKEY" -e "AWS_DEFAULT_REGION=us-west-2" -e "INPUT_AWS_EXTERNAL_ID=EXTERNALIDFORACCOUNT" -e "INPUT_AWS_ROLE_ARN=arn:aws:iam::{ACCOUNTID}:role/TerraformApply" -e "INPUT_DEBUG=true" -e "DB_NAME=dimulationdb" --entrypoint "/entrypoint.sh" aws-rds-admin-action:latest
