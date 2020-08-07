@@ -87,9 +87,9 @@ elif test "${ENGINE}" = 'postgresql'; then
     fi    
     psql -U $DB_USER -h $DB_HOST postgres -c "CREATE USER ${DB_NEW_USER} WITH ENCRYPTED PASSWORD '$DB_RANDOM_PASSWORD'"
     psql -U $DB_USER -h $DB_HOST postgres -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_NEW_USER"
-    aws ssm put-parameter --type SecureString --name "/${DB_CLUSTER}/password/$DB_NAME" --value "$DB_RANDOM_PASSWORD"
-    aws ssm put-parameter --type SecureString --name "/${DB_CLUSTER}/connection/writer/$DB_NAME" --value  "postgresql://${DB_NEW_USER}:${DB_RANDOM_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
-	aws ssm put-parameter --type SecureString --name "/${DB_CLUSTER}/connection/reader/$DB_NAME" --value  "postgresql://${DB_NEW_USER}:${DB_RANDOM_PASSWORD}@${DB_HOST_READER}:${DB_PORT}/${DB_NAME}"
+    aws ssm put-parameter --type SecureString --name "/${DB_CLUSTER}/$DB_NAME/password" --value "$DB_RANDOM_PASSWORD"
+    aws ssm put-parameter --type SecureString --name "/${DB_CLUSTER}/$DB_NAME/connection/writer" --value  "postgresql://${DB_NEW_USER}:${DB_RANDOM_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+	aws ssm put-parameter --type SecureString --name "/${DB_CLUSTER}/$DB_NAME/connection/reader" --value  "postgresql://${DB_NEW_USER}:${DB_RANDOM_PASSWORD}@${DB_HOST_READER}:${DB_PORT}/${DB_NAME}"
 else
     echo "ENGINE variable incorrect."
     return 1
