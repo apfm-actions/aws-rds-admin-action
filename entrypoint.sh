@@ -76,7 +76,6 @@ if test "${ENGINE}" = 'mysql'; then
     mycli -h $DB_HOST -u $DB_USER -p$DB_PASS -P $DB_PORT -e "CREATE USER '$DB_NEW_USER'@'*' IDENTIFIED BY PASSWORD PASSWORD('$DB_RANDOM_PASSWORD')"
     mycli -h $DB_HOST -u $DB_USER -p$DB_PASS -P $DB_PORT -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO myuser"
     aws ssm put-parameter --type SecureString --name "/default-aurora-mysql/password/$DB_NAME" --value "$DB_RANDOM_PASSWORD"
-    #aws ssm put-parameter --type SecureString --name "/default-aurora-mysql/connection/$DB_NAME" --value  "postgresql://${DB_NEW_USER}:${DB_RANDOM_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
 elif test "${ENGINE}" = 'postgresql'; then
     export DB_CLUSTER=${DB_CLUSTER:-'default-aurora-postgresql'}
     export PGPASSWORD=$(aws ssm get-parameter --name "/${DB_CLUSTER}/password/master" --with-decryption | jq -r '.Parameter.Value')
@@ -89,8 +88,6 @@ elif test "${ENGINE}" = 'postgresql'; then
     psql -U $DB_USER -h $DB_HOST postgres -c "CREATE USER ${DB_NEW_USER} WITH ENCRYPTED PASSWORD '$DB_RANDOM_PASSWORD'"
     psql -U $DB_USER -h $DB_HOST postgres -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_NEW_USER"
     aws ssm put-parameter --type SecureString --name "/${DB_CLUSTER}/$DB_NAME/password" --value "$DB_RANDOM_PASSWORD"
-    aws ssm put-parameter --type SecureString --name "/${DB_CLUSTER}/$DB_NAME/connection/writer" --value  "postgresql://${DB_NEW_USER}:${DB_RANDOM_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
-	aws ssm put-parameter --type SecureString --name "/${DB_CLUSTER}/$DB_NAME/connection/reader" --value  "postgresql://${DB_NEW_USER}:${DB_RANDOM_PASSWORD}@${DB_HOST_READER}:${DB_PORT}/${DB_NAME}"
 else
     echo "ENGINE variable incorrect."
     return 1
