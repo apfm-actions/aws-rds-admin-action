@@ -11,6 +11,7 @@ RUN set -e \
         python3-dev \
         py3-pip \
         postgresql-client \
+        pwgen \
     && pip3 install --upgrade \
         mycli==${MYCLI_VERSION} \
         pgcli==${PGCLI_VERSION} \
