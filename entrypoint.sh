@@ -71,10 +71,10 @@ if test "${ENGINE}" = 'mysql'; then
 	export DB_HOST_READER=${DB_HOST_READER:-$(aws rds describe-db-clusters --db-cluster-identifier ${DB_CLUSTER} | jq -r '.DBClusters[].ReaderEndpoint'))}
     export DB_PORT='3306'
     if test "${SKIP_DB_CREATION}" = 'false'; then
-        mycli -h $DB_HOST -u $DB_USER -p$DB_PASS -P $DB_PORT -e "CREATE DATABASE $DB_NAME"
+        mycli -h $DB_HOST -u $DB_USER -p$DB_PASSWORD -P $DB_PORT -e "CREATE DATABASE $DB_NAME"
     fi
-    mycli -h $DB_HOST -u $DB_USER -p$DB_PASS -P $DB_PORT -e "CREATE USER '$DB_NEW_USER'@'*' IDENTIFIED BY PASSWORD PASSWORD('$DB_RANDOM_PASSWORD')"
-    mycli -h $DB_HOST -u $DB_USER -p$DB_PASS -P $DB_PORT -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO myuser"
+    mycli -h $DB_HOST -u $DB_USER -p$DB_PASSWORD -P $DB_PORT -e "CREATE USER '$DB_NEW_USER'@'*' IDENTIFIED BY PASSWORD PASSWORD('$DB_RANDOM_PASSWORD')"
+    mycli -h $DB_HOST -u $DB_USER -p$DB_PASSWORD -P $DB_PORT -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO myuser"
     aws ssm put-parameter --type SecureString --name "/default-aurora-mysql/password/$DB_NAME" --value "$DB_RANDOM_PASSWORD"
 elif test "${ENGINE}" = 'postgresql'; then
     export DB_CLUSTER=${DB_CLUSTER:-'default-aurora-postgresql'}
