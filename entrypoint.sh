@@ -65,6 +65,7 @@ export DB_RANDOM_PASSWORD=$(date +%s | sha256sum | base64 | head -c 16)
 export DB_NEW_USER=${DB_NEW_USER:-"${DB_NAME}_user"}
 
 if test "${ENGINE}" = 'mysql'; then
+	apk add --no-cache mycli --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
     export DB_CLUSTER=${DB_CLUSTER:-'default-aurora-mysql'}
     export DB_PASSWORD=$(aws ssm get-parameter --name "/${DB_CLUSTER}/password/master" --with-decryption | jq -r '.Parameter.Value')
     export DB_HOST=${DB_HOST:-$(aws rds describe-db-clusters --db-cluster-identifier ${DB_CLUSTER} | jq -r '.DBClusters[].Endpoint'))}
