@@ -68,8 +68,8 @@ if test "${ENGINE}" = 'mysql'; then
 	apk add --no-cache mycli --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
     export DB_CLUSTER=${DB_CLUSTER:-'default-aurora-mysql'}
     export DB_PASSWORD=$(aws ssm get-parameter --name "/${DB_CLUSTER}/password/master" --with-decryption | jq -r '.Parameter.Value')
-    export DB_HOST=${DB_HOST:-$(aws rds describe-db-clusters --db-cluster-identifier ${DB_CLUSTER} | jq -r '.DBClusters[].Endpoint'))}
-	export DB_HOST_READER=${DB_HOST_READER:-$(aws rds describe-db-clusters --db-cluster-identifier ${DB_CLUSTER} | jq -r '.DBClusters[].ReaderEndpoint'))}
+    export DB_HOST=${DB_HOST:-$(aws rds describe-db-clusters --db-cluster-identifier ${DB_CLUSTER} | jq -r '.DBClusters[].Endpoint')}
+	export DB_HOST_READER=${DB_HOST_READER:-$(aws rds describe-db-clusters --db-cluster-identifier ${DB_CLUSTER} | jq -r '.DBClusters[].ReaderEndpoint')}
     export DB_PORT='3306'
     if test "${SKIP_DB_CREATION}" = 'false'; then
         mycli -h $DB_HOST -u $DB_USER -p${DB_PASSWORD} -P $DB_PORT -e "CREATE DATABASE $DB_NAME"
