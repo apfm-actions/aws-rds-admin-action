@@ -74,9 +74,9 @@ if test "${ENGINE}" = 'mysql'; then
     if test "${SKIP_DB_CREATION}" = 'false'; then
         mycli -h $DB_HOST -u $DB_USER -p${DB_PASSWORD} -P $DB_PORT -e "CREATE DATABASE $DB_NAME"
     fi
-    mycli -h $DB_HOST -u $DB_USER -p${DB_PASSWORD} -P $DB_PORT -e "CREATE USER '$DB_NEW_USER'@'*' IDENTIFIED BY PASSWORD PASSWORD('$DB_RANDOM_PASSWORD')"
-    mycli -h $DB_HOST -u $DB_USER -p${DB_PASSWORD} -P $DB_PORT -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO myuser"
-    aws ssm put-parameter --type SecureString --name "/default-aurora-mysql/password/$DB_NAME" --value "$DB_RANDOM_PASSWORD"
+    mycli -h $DB_HOST -u $DB_USER -p${DB_PASSWORD} -P $DB_PORT -e "CREATE USER '$DB_NEW_USER'@'*' IDENTIFIED BY '$DB_RANDOM_PASSWORD'"
+    mycli -h $DB_HOST -u $DB_USER -p${DB_PASSWORD} -P $DB_PORT -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_NEW_USER'@'*'"
+    aws ssm put-parameter --type SecureString --name "/${DB_CLUSTER}/$DB_NAME/password" --value "$DB_RANDOM_PASSWORD"
 elif test "${ENGINE}" = 'postgresql'; then
     export DB_CLUSTER=${DB_CLUSTER:-'default-aurora-postgresql'}
     export PGPASSWORD=$(aws ssm get-parameter --name "/${DB_CLUSTER}/password/master" --with-decryption | jq -r '.Parameter.Value')
